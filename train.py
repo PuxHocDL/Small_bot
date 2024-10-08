@@ -150,7 +150,7 @@ def get_or_build_tokenizer(config, ds, lang):
 def get_ds(config):
     # Tải dataset từ Hugging Face
     ds_big = load_dataset('opus100', 'en-vi')
-    ds_raw = dataset.select(range(len(ds_big) // 100))
+    ds_raw = ds_big.select(range(len(ds_big) // 100))
 
     # Tạo tokenizer cho ngôn ngữ nguồn và đích
     tokenizer_src = get_or_build_tokenizer(config, ds_raw['train'], config['lang_src'])
