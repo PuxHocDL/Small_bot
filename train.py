@@ -149,23 +149,29 @@ def get_or_build_tokenizer(config, ds, lang):
 # Hàm get_ds tạo dataset cho huấn luyện và kiểm tra
 def get_ds(config):
     # Tải dataset từ Hugging Face
-    ds_big = load_dataset('opus100', 'en-vi')
-    ds_raw = ds_big.select(range(len(ds_big) // 100))
+    ds_raw = load_dataset('opus100', 'en-vi')
+
+    # Lấy 1/100 của tập train và validation
+    subset_train_size = len(ds_raw['train']) // 100
+    subset_val_size = len(ds_raw['validation']) // 100
+
+    # Lấy một phần nhỏ của train và validation dataset
+    subset_train = ds_raw['train'].select(range(subset_train_size))
+    subset_val = ds_raw['validation'].select(range(subset_val_size))
 
     # Tạo tokenizer cho ngôn ngữ nguồn và đích
-    tokenizer_src = get_or_build_tokenizer(config, ds_raw['train'], config['lang_src'])
-    tokenizer_tgt = get_or_build_tokenizer(config, ds_raw['train'], config['lang_tgt'])
+    tokenizer_src = get_or_build_tokenizer(config, subset_train, config['lang_src'])
+    tokenizer_tgt = get_or_build_tokenizer(config, subset_train, config['lang_tgt'])
 
     # Sử dụng tập train và validation có sẵn
-    train_ds = BilingualDataset(ds_raw['train'], tokenizer_src, tokenizer_tgt, config['lang_src'], config['lang_tgt'], config['seq_len'])
-    val_ds = BilingualDataset(ds_raw['validation'], tokenizer_src, tokenizer_tgt, config['lang_src'], config['lang_tgt'], config['seq_len'])
+    train_ds = BilingualDataset(subset_train, tokenizer_src, tokenizer_tgt, config['lang_src'], config['lang_tgt'], config['seq_len'])
+    val_ds = BilingualDataset(subset_val, tokenizer_src, tokenizer_tgt, config['lang_src'], config['lang_tgt'], config['seq_len'])
 
     # Tạo DataLoader
     train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
     val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
 
     return train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt
-
 
 
 # Hàm get_model khởi tạo mô hình Transformer dựa trên cấu hình
